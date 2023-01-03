@@ -92,13 +92,13 @@ if userverify.STATUS:
     def entry_search():
         website_search = website_entry.get("1.0", "end-1c")
 
-        user_info = cursor.execute(SEARCH_QUERY, (website_search.lower(),))
+        user_info = cursor.execute(SEARCH_QUERY, (website_search.lower(), active_user,))
         if not website_search:
             messagebox.showerror("Error", "Fill out all required fields!")
         elif len(user_info.fetchall()) == 0:
             messagebox.showerror("Message", "No such entry exists!")
         else:
-            user_info = cursor.execute(SEARCH_QUERY, (website_search.lower(), active_user))
+            user_info = cursor.execute(SEARCH_QUERY, (website_search.lower(), active_user,))
             user_tuple = user_info.fetchall()
             username = user_tuple[0][0]
             pwd = user_tuple[0][1]
@@ -160,7 +160,7 @@ if userverify.STATUS:
     def update_password():
         website_search = website_entry.get("1.0", "end-1c")
         password_search = password_entry.get("1.0", "end-1c")
-        cursor.execute(SEARCH_QUERY, (website_search.lower(),))
+        cursor.execute(SEARCH_QUERY, (website_search.lower(), active_user))
 
         if not website_search or not password_search:
             messagebox.showerror("Error", "Fill out all required fields!")
@@ -230,3 +230,4 @@ if userverify.STATUS:
 
     # conn.close()
     window.mainloop()
+
