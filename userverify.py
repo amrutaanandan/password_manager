@@ -77,7 +77,7 @@ class UserVerify(Tk):
             if len(cursor.fetchall()) == 0:
                 messagebox.showerror("Error", "Invalid Credentials!")
                 STATUS = False
-                self.pwd_verify_entry.delete("1.0", "end")
+                self.pwd_verify_entry.delete(0, "end")
             else:
                 messagebox.showinfo("Message", f"Welcome {username}! :D")
                 STATUS = True
@@ -96,9 +96,9 @@ class UserVerify(Tk):
             try:
                 cursor.execute('''insert into userverification values(?,?)''', (username, password))
             except sqlite3.IntegrityError:
-                messagebox.showerror("Error", "Username already exists!")
+                messagebox.showerror("Error", "User already exists!")
             else:
                 conn.commit()
                 STATUS = True
                 USER = username
-                messagebox.showinfo("Message", f"Hello new user {USER}! :D")
+                self.verify_user()
