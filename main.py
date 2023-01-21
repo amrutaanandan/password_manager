@@ -176,7 +176,7 @@ if userverify.STATUS:
                 message_label = Label(popup, text=f"This will update {website_search}'s password", font=FONT4)
                 message_label.place(x=35, y=40)
 
-                confirm = Button(popup, text="CONFIRM?", font=FONT3, width=8, relief="solid", borderwidth=0,
+                confirm= Button(popup, text="CONFIRM?", font=FONT3, width=8, relief="solid", borderwidth=0,
                                  bg=DEEP_BLUE,
                                  fg=LIGHT_BLUE, command=lambda: confirm_query(popup))
                 confirm.place(x=110, y=90)
