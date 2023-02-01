@@ -1,4 +1,3 @@
-import csv
 from tkinter import *
 from tkinter import messagebox
 import sqlite3
@@ -10,6 +9,8 @@ from userverify import UserVerify
 import os
 import sys
 import pandas as pd
+import time
+
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -38,10 +39,10 @@ NUMS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']
 
 # --------------------QUERIES--------------------#
 
-SEARCH_QUERY = '''select username, password from password where website =? and userid =?'''
-INSERT_QUERY = '''insert into password values(?,?,?,?)'''
+SEARCH_QUERY = '''select username, password, createdate from password where website =? and userid =?'''
+INSERT_QUERY = '''insert into password values(?,?,?,?,?,?)'''
 DELETE_QUERY = '''delete from password where website =? and userid =?'''
-UPDATE_QUERY = '''update password set password =? where website=? and userid=?'''
+UPDATE_QUERY = '''update password set password =?, updatedate=? where website=? and userid=?'''
 
 # --------------------DATABASE CONNECTION--------------------#
 
@@ -61,7 +62,7 @@ if userverify.STATUS:
     window = Tk()
     window.title("Password Manager")
     window.config(bg="white")
-    window.minsize(height=600, width=500)
+    window.minsize(height=630, width=500)
     canvas = Canvas(width=300, height=300, highlightthickness=0, bg="white")
     logo = PhotoImage(file=pass_logo)
     canvas.create_image(230, 150, image=logo)
@@ -99,6 +100,18 @@ if userverify.STATUS:
 
     # --------------------BUTTON COMMANDS--------------------#
 
+    # --------------------SHOW TIMESTAMP--------------------#
+
+    def show_timestamp():
+        try:
+            cursor.execute("select updatedate, website from password where userid=?", (active_user,))
+            dates = cursor.fetchall()
+            last_update = max(dates)
+            messagebox.showinfo("Last Updated Entry", f"Website: {last_update[1]}\nTimestamp: {last_update[0]}")
+        except:
+            messagebox.showerror("Error", "Some error has occurred!")
+
+
     # --------------------SEARCHING FOR ENTRIES--------------------#
     def entry_search():
         website_search = website_entry.get("1.0", "end-1c")
@@ -129,7 +142,8 @@ if userverify.STATUS:
         else:
             try:
                 cursor.execute(INSERT_QUERY,
-                               (username_search.lower(), password_search.lower(), website_search.lower(), active_user,))
+                               (username_search.lower(), password_search.lower(), website_search.lower(), active_user,
+                                time.time(), time.time()))
             except:
                 messagebox.showerror("Error", "Some error has occurred or Website already exists!")
             else:
@@ -145,6 +159,7 @@ if userverify.STATUS:
                                  bg=DEEP_BLUE,
                                  fg=LIGHT_BLUE, command=lambda: confirm_query(popup))
                 confirm.place(x=110, y=90)
+
 
     # --------------------DELETE PASSWORDS--------------------#
 
@@ -180,7 +195,7 @@ if userverify.STATUS:
             messagebox.showerror("Error", "Website entry does not exist!")
         else:
             try:
-                cursor.execute(UPDATE_QUERY, (password_search, website_search, active_user))
+                cursor.execute(UPDATE_QUERY, (password_search, time.time(), website_search, active_user))
             except:
                 messagebox.showerror("Error", "Some error has occurred!")
             else:
@@ -192,6 +207,8 @@ if userverify.STATUS:
                                  bg=DEEP_BLUE,
                                  fg=LIGHT_BLUE, command=lambda: confirm_query(popup))
                 confirm.place(x=110, y=90)
+
+
 
     # --------------------GENERATE PASSWORD--------------------#
 
@@ -258,6 +275,9 @@ if userverify.STATUS:
     view_pass = Button(text="VIEW ALL SAVED PASSWORDS", font=FONT3, width=39, relief="solid", borderwidth=0,
                        bg=DEEP_BLUE, fg=LIGHT_BLUE, padx=2.5, command=view_saved_pass)
     view_pass.place(x=62, y=510)
+    view_update = Button(text="VIEW LAST UPDATE", font=FONT3, width=39, relief="solid", borderwidth=0,
+                       bg=LIGHT_BLUE, fg=DEEP_BLUE, padx=2.5, command=show_timestamp)
+    view_update.place(x=62, y=550)
 
     # conn.close()
     window.mainloop()
