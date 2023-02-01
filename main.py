@@ -1,14 +1,25 @@
+import csv
 from tkinter import *
 from tkinter import messagebox
 import sqlite3
 import random
 import pyperclip
-
 import userverify
 from popup import Popup
 from userverify import UserVerify
+import os
+import sys
+import pandas as pd
+
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, relative_path)
 
 # --------------------CONSTANTS--------------------#
+
+pass_logo = resource_path("password.png")
+db = resource_path("password.db")
 
 FONT = ('Arial', 25, 'italic')
 FONT2 = ('Consolas', 12, 'bold')
@@ -34,7 +45,7 @@ UPDATE_QUERY = '''update password set password =? where website=? and userid=?''
 
 # --------------------DATABASE CONNECTION--------------------#
 
-conn = sqlite3.connect("password.db")
+conn = sqlite3.connect(db)
 cursor = conn.cursor()
 
 # --------------------SECURITY VERIFICATION--------------------#
@@ -50,9 +61,9 @@ if userverify.STATUS:
     window = Tk()
     window.title("Password Manager")
     window.config(bg="white")
-    window.minsize(height=550, width=500)
+    window.minsize(height=600, width=500)
     canvas = Canvas(width=300, height=300, highlightthickness=0, bg="white")
-    logo = PhotoImage(file="password.png")
+    logo = PhotoImage(file=pass_logo)
     canvas.create_image(230, 150, image=logo)
     canvas.place(x=30, y=10)
     window.resizable(False, False)
@@ -91,7 +102,8 @@ if userverify.STATUS:
     # --------------------SEARCHING FOR ENTRIES--------------------#
     def entry_search():
         website_search = website_entry.get("1.0", "end-1c")
-
+        username_entry.delete("1.0", "end")
+        password_entry.delete("1.0", "end")
         user_info = cursor.execute(SEARCH_QUERY, (website_search.lower(), active_user,))
         if not website_search:
             messagebox.showerror("Error", "Fill out all required fields!")
@@ -119,7 +131,7 @@ if userverify.STATUS:
                 cursor.execute(INSERT_QUERY,
                                (username_search.lower(), password_search.lower(), website_search.lower(), active_user,))
             except:
-                messagebox.showerror("Error", "Some error has occurred!")
+                messagebox.showerror("Error", "Some error has occurred or Website already exists!")
             else:
                 popup = Popup()
 
@@ -176,7 +188,7 @@ if userverify.STATUS:
                 message_label = Label(popup, text=f"This will update {website_search}'s password", font=FONT4)
                 message_label.place(x=35, y=40)
 
-                confirm= Button(popup, text="CONFIRM?", font=FONT3, width=8, relief="solid", borderwidth=0,
+                confirm = Button(popup, text="CONFIRM?", font=FONT3, width=8, relief="solid", borderwidth=0,
                                  bg=DEEP_BLUE,
                                  fg=LIGHT_BLUE, command=lambda: confirm_query(popup))
                 confirm.place(x=110, y=90)
@@ -203,6 +215,21 @@ if userverify.STATUS:
         website_entry.delete("1.0", "end")
 
 
+    # --------------------GENERATE REPORT--------------------#
+
+    def view_saved_pass():
+        try:
+            info = cursor.execute("select username, website, password from password where userid=?", (active_user,))
+            if(len(info.fetchall()) == 0):
+                messagebox.showerror("Error!", "No saved passwords for current users!")
+            else:
+                cursor.execute("select username, website, password from password where userid=?", (active_user, ))
+                db_df = pd.DataFrame(cursor.fetchall())
+                db_df.to_csv(f'{active_user}.csv', index=False)
+                messagebox.showinfo("Exported!", "Data successfully exported to csv!")
+        except:
+            messagebox.showerror("Error","Some error has occurred")
+
     # --------------------BUTTONS--------------------#
 
     search_button = Button(text="SEARCH", font=FONT3, width=8, relief="solid", borderwidth=0, bg=DEEP_BLUE,
@@ -227,6 +254,10 @@ if userverify.STATUS:
                            fg=DEEP_BLUE,
                            command=delete_password)
     delete_button.place(x=186, y=470)
+
+    view_pass = Button(text="VIEW ALL SAVED PASSWORDS", font=FONT3, width=39, relief="solid", borderwidth=0,
+                       bg=DEEP_BLUE, fg=LIGHT_BLUE, padx=2.5, command=view_saved_pass)
+    view_pass.place(x=62, y=510)
 
     # conn.close()
     window.mainloop()
